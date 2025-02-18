@@ -632,8 +632,6 @@ class StepByStepLLMTitleGenParticipant(ParticipantModel):
         self.max_para_num_words = max_para_num_words
         if gen_model == "gpt_chat":
             self.generator = GPTChatGenerator(**kwargs)
-        elif gen_model == "fastchat_api":
-            self.generator = FastChatGenerator(**kwargs)
         elif gen_model == "llm_api":
             self.generator = LLMClientGenerator(**kwargs)
         else:
@@ -755,8 +753,6 @@ class StepByStepCOTGenParticipant(ParticipantModel):
         self.max_para_num_words = max_para_num_words
         if gen_model == "gpt_chat":
             self.generator = GPTChatGenerator(**kwargs)
-        elif gen_model == "fastchat_api":
-            self.generator = FastChatGenerator(**kwargs)
         elif gen_model == "llm_api":
             self.generator = LLMClientGenerator(**kwargs)
 

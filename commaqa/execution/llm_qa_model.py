@@ -2,7 +2,6 @@ import json
 import re
 
 from commaqa.inference.prompt_reader import read_prompt
-from commaqa.models.fastchat_models import FastChatGenerator
 from commaqa.models.gpt_chat import GPTChatGenerator
 from commaqa.models.flan_t5 import LLMClientGenerator
 
@@ -20,8 +19,7 @@ class LLMQAModel:
             self.prompt = None
         if gen_model == "gpt_chat":
             self.generator = GPTChatGenerator(**kwargs)
-        elif gen_model == "fastchat_api":
-            self.generator = FastChatGenerator(**kwargs)
+
         elif gen_model == "llm_api":
             self.generator = LLMClientGenerator(**kwargs)
         else:
