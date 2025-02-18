@@ -5,20 +5,27 @@ We have already stored processed data in `data` directory, but if you want to do
 bash scripts/data/preprocess.sh
 ```
 
-
-
-
-
-
-(1) compute step efficiency:
+# compute step efficiency:
 ```
 bash scripts/data/step_efficiency.sh
 ```
-(2) evaluate with classifier
+
+# Train cost-optimized classifier and reliability-optimized classifier
+
+```
+bash scripts/train/train.sh
+```
+# Merge the parameters 
+```
+bash scripts/train/merge.sh
+```
+
+
+- evaluate with classifier
 ```
 bash scripts/eval/evaluate_merged.sh
 ```
-(3) Get the final RAG evaluation
+- Get the final RAG evaluation
 ```
 bash scripts/eval/final_evaluation.sh
 ```
@@ -27,10 +34,6 @@ bash scripts/eval/final_evaluation.sh
 
 
 
-# Train the model
-```
-bash scripts/train/train.sh
-```
 
 
 

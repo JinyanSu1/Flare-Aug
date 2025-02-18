@@ -181,9 +181,8 @@ def save_json(json_file_path, json_data):
 
 
 def save_prediction_with_classified_label(total_qid_to_classification_pred, dataset_name, stepNum_result_file, dataName_to_multi_one_zero_file, output_path):
-    qid_to_classification_pred = {}
-    qid_to_classification_pred_option = {}
     total_stepNum = 0
+    qid_to_classification_pred = {}
 
     for qid in total_qid_to_classification_pred.keys():
         
@@ -202,16 +201,17 @@ def save_prediction_with_classified_label(total_qid_to_classification_pred, data
         elif predicted_option == 'A':
             stepNum = 0
 
+        total_stepNum = total_stepNum + stepNum
         pred = load_json(dataName_to_multi_one_zero_file[dataset_name][predicted_option])[qid]
         qid_to_classification_pred[qid] = pred
-        qid_to_classification_pred_option[qid] = {'prediction' : pred, 'option' : predicted_option, 'stepNum' : stepNum}
-        total_stepNum = total_stepNum + stepNum
+
+
     
-    print('==============')
     save_json(os.path.join(output_path, dataset_name , dataset_name+'.json'), qid_to_classification_pred)
-    save_json(os.path.join(output_path, dataset_name, dataset_name+'_option.json'), qid_to_classification_pred_option)
-    print('StepNum')
-    print(dataset_name + ': ' +str(total_stepNum))
+
+
+    return total_stepNum/len(total_qid_to_classification_pred.keys())
+    
 
 def label_complexity(orig_file_path, zero_file_path, one_file_path, multi_file_path, dataset_name):
     lst_dict_final = []

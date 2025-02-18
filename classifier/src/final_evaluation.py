@@ -149,18 +149,20 @@ def main():
 
     # Load classification predictions
     total_qid_to_classification_pred = load_json(classification_result_file)
+    final_avg_StepNum = 0
 
     # Save new predictions with classification-based step labels
     for data_name in dataName_to_multi_one_zero_file.keys():
-        save_prediction_with_classified_label(
+        avg_stepNum = save_prediction_with_classified_label(
             total_qid_to_classification_pred,
             data_name,
             stepNum_result_file,
             dataName_to_multi_one_zero_file,
             output_path
         )
+        final_avg_StepNum += avg_stepNum
 
-    print("Classification post-processing completed.")
+    print("Average StepNum:", final_avg_StepNum / len(dataName_to_multi_one_zero_file))
     print("--------------------------------------------------")
 
     # -------------------------
@@ -231,7 +233,6 @@ def main():
         return 0
 
     def evaluate_by_dicts(data_name: str):
-        metrics = [SquadAnswerEmF1Metric()]
         pred_json_path = os.path.join(output_path, data_name, f"{data_name}.json")
         id_to_predictions = load_predictions(pred_json_path)
         gt_jsonl_path = os.path.join(gt_path, data_name, f"{args.evaluate_type}_subsampled.jsonl")
@@ -271,17 +272,12 @@ def main():
             acc = calculate_acc(norm_pred, norm_gts)
             total_acc += acc
 
-            # Also update the EM/F1 metrics
-            metrics[0](prediction, ground_truth)
+
 
         total_acc /= len(id_to_predictions)
-        evaluation_results = metrics[0].get_metric()
-        evaluation_results['acc'] = total_acc
+        return total_acc
 
-        save_results(
-            evaluation_results,
-            os.path.join(output_path, data_name, "eval_metic_result_acc.json")
-        )
+
 
     def official_evaluate_by_dicts(data_name: str):
         """
@@ -291,7 +287,6 @@ def main():
         pred_json_path = os.path.join(output_path, data_name, f"{data_name}.json")
         id_to_predictions = load_predictions(pred_json_path)
         gt_jsonl_path = os.path.join(gt_path, data_name, f"{args.evaluate_type}_subsampled.jsonl")
-        id_to_ground_truths = load_ground_truths(gt_jsonl_path)
 
         question_ids = list(id_to_predictions.keys())
 
@@ -343,24 +338,15 @@ def main():
 
             with open(temp_output_file_path, "r") as file:
                 metrics_ = eval(file.read().strip())  # hotpot script prints a dict
-                metrics = {
-                    "f1": round(metrics_["f1"], 5),
-                    "em": round(metrics_["em"], 5),
-                    "precision": round(metrics_["prec"], 5),
-                    "recall": round(metrics_["recall"], 5),
-                    "count": len(id_to_predictions),
-                    "acc": round(metrics_["acc"], 5),
-                }
+                total_acc = round(metrics_["acc"], 5)
 
             # Cleanup
             os.remove(temp_ground_truth_file_path)
             os.remove(temp_prediction_file_path)
             os.remove(temp_output_file_path)
+            return total_acc
 
-            save_results(
-                metrics,
-                os.path.join(output_path, data_name, "eval_metic_result_acc.json")
-            )
+
 
         elif data_name == "2wikimultihopqa":
             # Use the official 2wikimultihop evaluation script
@@ -396,24 +382,15 @@ def main():
 
             with open(temp_output_file_path, "r") as file:
                 metrics_ = json.loads(file.read().strip())
-                metrics = {
-                    "f1": round(metrics_["f1"] / 100, 5),
-                    "em": round(metrics_["em"] / 100, 5),
-                    "precision": round(metrics_["prec"] / 100, 5),
-                    "recall": round(metrics_["recall"] / 100, 5),
-                    "count": len(id_to_predictions),
-                    "acc": round(metrics_["acc"] / 100, 5),
-                }
+                total_acc = round(metrics_["acc"]/100, 5)
+   
 
             # Cleanup
             os.remove(temp_ground_truth_file_path)
             os.remove(temp_prediction_file_path)
             os.remove(temp_output_file_path)
 
-            save_results(
-                metrics,
-                os.path.join(output_path, data_name, "eval_metic_result_acc.json")
-            )
+            return total_acc
 
         elif data_name == "musique":
             # Official musique evaluation
@@ -454,33 +431,33 @@ def main():
 
             with open(temp_output_file_path, "r") as file:
                 metrics_ = json.loads(file.read().strip())
-                metrics = {
-                    "f1": round(metrics_["answer_f1"], 3),
-                    "em": round(metrics_.get("answer_em", 0.0), 3),
-                    "count": len(id_to_predictions),
-                    "acc": round(metrics_["answer_acc"], 3),
-                }
+                total_acc = round(metrics_["answer_acc"], 5)
 
             # Cleanup
             os.remove(temp_ground_truth_file_path)
             os.remove(temp_prediction_file_path)
             os.remove(temp_output_file_path)
 
-            save_results(
-                metrics,
-                os.path.join(output_path, data_name, "eval_metic_result_acc.json")
-            )
-
+            return total_acc
+    avg_total_acc = 0
+    count = 0
     # Evaluate standard single-hop sets
     for data_name in ['nq', 'trivia', 'squad']:
-        evaluate_by_dicts(data_name)
+        total_acc = evaluate_by_dicts(data_name)
+        avg_total_acc += total_acc
+        count += 1
 
     # Evaluate multi-hop sets with official scripts
     for data_name in ['musique', 'hotpotqa', '2wikimultihopqa']:
-        official_evaluate_by_dicts(data_name)
+        total_acc = official_evaluate_by_dicts(data_name)
+        avg_total_acc += total_acc
+        count += 1
 
-    print("Evaluation completed.")
-    print("All done!")
+    print("Average Total Accuracy:", avg_total_acc / count)
+    with open(os.path.join(output_path, 'final_result.json'), 'w') as f:
+        json.dump({"acc": round(avg_total_acc / count, 3), 
+                   'steps': round(final_avg_StepNum / len(dataName_to_multi_one_zero_file),3)}, f)
+
 
 # --------------------------------------------------------------------------
 if __name__ == "__main__":

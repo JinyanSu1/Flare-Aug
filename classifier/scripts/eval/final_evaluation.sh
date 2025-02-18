@@ -1,6 +1,6 @@
 dataname=valid
 GPU=0
-
+BASE_DIR=$(pwd)
 for model in flan_t5_xl gpt4o gpt4o_mini flan_t5_xxl
 do 
   for alpha in 0 0.2 0.4 0.6 0.8 1
@@ -18,7 +18,9 @@ do
       --gt_path ../processed_data \
       --retrieval_result_file_dir ${retrieval_result_file_dir} \
       --official_evaluation_path ../official_evaluation \
-      --raw_data_path ../raw_data \
+      --raw_data_path ${BASE_DIR}/../raw_data \
       --evaluate_type ${dataname}
   done
 done
+
+
